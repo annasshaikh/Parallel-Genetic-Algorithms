@@ -1,0 +1,96 @@
+# config_examples/master_slave_experiment.yaml
+global_settings:
+  verbose: true # Verbosity for GA steps
+
+experiments:
+  - name: "Sphere_Serial_Baseline"
+    model: "serial_ga" # Uses MasterSlaveGA with 1 worker for baseline
+    trials: 1
+    problem:
+      name: "Sphere"
+      params:
+        dimensions: 20
+        value_bounds: [-5.12, 5.12]
+        target_fitness: 0.00001 # 1e-5
+    ga_parameters:
+      population_size: 100
+      generations: 200
+      elite_size: 2
+    operators:
+      selection:
+        type: "tournament"
+        tournament_size: 3
+      crossover:
+        type: "arithmetic" # Continuous problem
+        rate: 0.9
+      mutation:
+        type: "gaussian"   # Continuous problem
+        rate: 0.02         # Per-gene mutation rate
+        strength: 0.2
+        # value_bounds are taken from problem.value_bounds automatically by GaussianMutation
+
+  - name: "Sphere_MasterSlave_4Workers"
+    model: "master_slave"
+    trials: 2 # Run 2 trials for statistical significance (example)
+    problem:
+      name: "Sphere" # Same problem as baseline for comparison
+      params:
+        dimensions: 20
+        value_bounds: [-5.12, 5.12]
+        target_fitness: 0.00001 
+    ga_parameters:
+      population_size: 100
+      generations: 200
+      elite_size: 2
+    operators:
+      selection: { type: "tournament", tournament_size: 3 }
+      crossover: { type: "arithmetic", rate: 0.9 }
+      mutation: { type: "gaussian", rate: 0.02, strength: 0.2 }
+    model_parameters:
+      num_workers: 4 # Number of CPU cores for Master-Slave
+
+  - name: "Sphere_MasterSlave_8Workers"
+    model: "master_slave"
+    trials: 1
+    problem: { name: "Sphere", params: { dimensions: 20, value_bounds: [-5.12, 5.12], target_fitness: 0.00001 } }
+    ga_parameters: { population_size: 100, generations: 200, elite_size: 2 }
+    operators:
+      selection: { type: "tournament", tournament_size: 3 }
+      crossover: { type: "arithmetic", rate: 0.9 }
+      mutation: { type: "gaussian", rate: 0.02, strength: 0.2 }
+    model_parameters:
+      num_workers: 8
+
+  - name: "TSP_Serial_Baseline"
+    model: "serial_ga"
+    trials: 1
+    problem:
+      name: "TSP"
+      params:
+        num_cities: 25 # Number of cities
+        # distance_matrix: null # Will be auto-generated randomly
+        target_fitness: 250 # Example target, depends on specific TSP instance
+    ga_parameters:
+      population_size: 150
+      generations: 300
+      elite_size: 2
+    operators:
+      selection: { type: "tournament", tournament_size: 5 }
+      crossover:
+        type: "order_tsp" # For permutation problems
+        rate: 0.85
+      mutation:
+        type: "swap_tsp"   # For permutation problems
+        rate: 0.15         # Per-individual mutation rate for swap
+
+  - name: "TSP_MasterSlave_4Workers"
+    model: "master_slave"
+    trials: 1
+    problem: { name: "TSP", params: { num_cities: 25, target_fitness: 250 } }
+    ga_parameters: { population_size: 150, generations: 300, elite_size: 2 }
+    operators:
+      selection: { type: "tournament", tournament_size: 5 }
+      crossover: { type: "order_tsp", rate: 0.85 }
+      mutation: { type: "swap_tsp", rate: 0.15 }
+    model_parameters:
+      num_workers: 4

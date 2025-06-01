@@ -1,0 +1,61 @@
+# config_examples/cellular_experiment.yaml
+global_settings:
+  verbose: true
+
+experiments:
+  - name: "Sphere_CellularCUDA_16x16_Moore"
+    model: "cellular_cuda"
+    trials: 1 # CUDA runs can be long, adjust trials as needed
+    problem:
+      name: "Sphere"
+      params:
+        dimensions: 10
+        value_bounds: [-5.12, 5.12]
+        target_fitness: 0.00001 # 1e-5
+    ga_parameters: # For cGA, population_size is grid_width * grid_height
+      generations: 150
+      # elite_size is typically not used in standard cGA, so omit or set to 0 if BaseGA requires it
+    operators: # For cGA, these are rates used by the CUDA kernel
+      crossover:
+        # type: "arithmetic" # Implied by current cGA kernel for continuous
+        rate: 0.9 # Per-individual crossover probability in the kernel
+      mutation:
+        # type: "gaussian" # Implied by current cGA kernel for continuous
+        rate: 0.05  # Per-gene mutation probability in the kernel
+        strength: 0.15 # Mutation strength for Gaussian mutation
+        # value_bounds are taken from problem.value_bounds automatically by CellularGA
+    model_parameters:
+      grid_width: 16  # Results in 16x16 = 256 individuals
+      grid_height: 16
+      neighborhood: "moore" # "moore" or "von_neumann"
+
+  - name: "Rastrigin_CellularCUDA_32x32_VonNeumann"
+    model: "cellular_cuda"
+    trials: 1
+    problem:
+      name: "Rastrigin"
+      params:
+        dimensions: 10
+        value_bounds: [-5.12, 5.12]
+        target_fitness: 0.001
+    ga_parameters:
+      generations: 200
+    operators:
+      crossover: { rate: 0.85 }
+      mutation: { rate: 0.02, strength: 0.2 }
+    model_parameters:
+      grid_width: 32  # Results in 32x32 = 1024 individuals
+      grid_height: 32
+      neighborhood: "von_neumann"
+
+# IMPORTANT NOTES for CellularGA CUDA Kernels:
+# 1. Problem Support: The current `cellular_cuda.py` kernels (fitness_kernel_template, interaction_kernel_template)
+#    are primarily set up for CONTINUOUS problems like Sphere/Rastrigin using arithmetic crossover and Gaussian mutation.
+#    To run TSP or RoyalRoad with CellularGA, the CUDA kernels (`.cu` files or kernel strings) would need to be
+#    significantly adapted or new problem-specific kernels written to handle permutation or binary chromosomes
+#    and their corresponding operators (e.g., OX1 crossover for TSP, bit-flip mutation for binary) on the GPU.
+#    This is a non-trivial CUDA development task.
+# 2. PyCUDA Availability: Ensure PyCUDA is correctly installed and a CUDA-enabled GPU is available.
+#    The `CellularGA` class checks for `PYCUDA_AVAILABLE`.
+# 3. cuRAND Initialization: The `CellularGA` class includes a kernel to initialize cuRAND states. This is vital.
+#    Ensure your CUDA toolkit version is compatible with PyCUDA and the cuRAND features used.

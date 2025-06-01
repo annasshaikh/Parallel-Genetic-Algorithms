@@ -17,8 +17,6 @@ This project implements two parallel Genetic Algorithm paradigms:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/parallel-ga.git
-cd parallel-ga
 
 # Create a virtual environment (optional but recommended)
 python -m venv venv
